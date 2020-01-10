@@ -34,7 +34,7 @@ enum _CameraState {
 
 class CameraMlVision<T> extends StatefulWidget {
   final HandleDetection<T> detector;
-  final Function(T) onResult;
+  final Function(T, [CameraImage]) onResult;
   final WidgetBuilder loadingBuilder;
   final ErrorWidgetBuilder errorBuilder;
   final WidgetBuilder overlayBuilder;
@@ -283,7 +283,7 @@ class CameraMlVisionState<T> extends State<CameraMlVision<T>> {
       try {
         final T results =
             await _detect<T>(cameraImage, widget.detector, _rotation);
-        widget.onResult(results);
+        widget.onResult(results, cameraImage);
       } catch (ex, stack) {
         debugPrint('$ex, $stack');
       }
