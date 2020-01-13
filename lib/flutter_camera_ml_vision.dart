@@ -34,7 +34,7 @@ enum _CameraState {
 
 class CameraMlVision<T> extends StatefulWidget {
   final HandleDetection<T> detector;
-  final Function(T, [CameraImage]) onResult;
+  final Function(T result, {CameraImage cameraImage}) onResult;
   final WidgetBuilder loadingBuilder;
   final ErrorWidgetBuilder errorBuilder;
   final WidgetBuilder overlayBuilder;
@@ -145,8 +145,27 @@ class CameraMlVisionState<T> extends State<CameraMlVision<T>> {
     await _cameraController.startImageStream(_processImage);
   }
 
-  Future<void> Function(String path) get takePicture =>
-      _cameraController.takePicture;
+  // Future<void> Function(String path) get takePicture =>
+  //     _cameraController.takePicture;
+  Future<void> takePicture(String path) async {
+    final wasStreaming = cameraValue?.isStreamingImages ?? false;
+    if (wasStreaming) {
+      await _cameraController.stopImageStream();
+    }
+
+    // Hack, for some reason sometimes it will
+    // throw an exception the first time after
+    // stopping streaming images
+    try {
+      await _cameraController.takePicture(path);
+    } catch (_) {
+      await _cameraController.takePicture(path);
+    }
+
+    if (wasStreaming) {
+      await _cameraController.startImageStream(_processImage);
+    }
+  }
 
   Future<void> _initialize() async {
     if (Platform.isAndroid) {
@@ -290,7 +309,7 @@ class CameraMlVisionState<T> extends State<CameraMlVision<T>> {
       try {
         final T results =
             await _detect<T>(cameraImage, widget.detector, _rotation);
-        widget.onResult(results, cameraImage);
+        widget.onResult(results, cameraImage: cameraImage);
       } catch (ex, stack) {
         debugPrint('$ex, $stack');
       }
